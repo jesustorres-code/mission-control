@@ -1,36 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import PixelOctopus from './PixelOctopus';
 import PixelIcon from './PixelIcon';
 
 type NavItem = {
   id: string;
   label: string;
+  href: string;
   icon: 'home' | 'agents' | 'tasks' | 'logs' | 'settings'
       | 'content' | 'calendar' | 'projects' | 'memory' | 'docs' | 'team' | 'visual';
   original?: boolean;
 };
 
 const NAV: NavItem[] = [
-  { id: 'overview',  label: 'Overview',  icon: 'home',     original: true },
-  { id: 'agents',    label: 'Agents',    icon: 'agents',   original: true },
-  { id: 'tasks',     label: 'Tasks',     icon: 'tasks',    original: true },
-  { id: 'logs',      label: 'Logs',      icon: 'logs',     original: true },
-  { id: 'settings',  label: 'Settings',  icon: 'settings', original: true },
-  { id: 'content',   label: 'Content',   icon: 'content'   },
-  { id: 'calendar',  label: 'Calendar',  icon: 'calendar'  },
-  { id: 'projects',  label: 'Projects',  icon: 'projects'  },
-  { id: 'memory',    label: 'Memory',    icon: 'memory'    },
-  { id: 'docs',      label: 'Docs',      icon: 'docs'      },
-  { id: 'team',      label: 'Team',      icon: 'team'      },
-  { id: 'visual',    label: 'Visual',    icon: 'visual'    },
+  { id: 'overview',  label: 'Overview',  href: '/',         icon: 'home',     original: true },
+  { id: 'agents',    label: 'Agents',    href: '/agents',   icon: 'agents',   original: true },
+  { id: 'tasks',     label: 'Tasks',     href: '/',         icon: 'tasks',    original: true },
+  { id: 'logs',      label: 'Logs',      href: '/logs',     icon: 'logs',     original: true },
+  { id: 'settings',  label: 'Settings',  href: '/settings', icon: 'settings', original: true },
+  { id: 'content',   label: 'Content',   href: '/content',  icon: 'content'   },
+  { id: 'calendar',  label: 'Calendar',  href: '/calendar', icon: 'calendar'  },
+  { id: 'projects',  label: 'Projects',  href: '/projects', icon: 'projects'  },
+  { id: 'memory',    label: 'Memory',    href: '/memory',   icon: 'memory'    },
+  { id: 'docs',      label: 'Docs',      href: '/docs',     icon: 'docs'      },
+  { id: 'team',      label: 'Team',      href: '/team',     icon: 'team'      },
+  { id: 'visual',    label: 'Visual',    href: '/visual',   icon: 'visual'    },
 ];
 
 const VERSION = '0.1.0';
 
 export default function Sidebar() {
-  const [active, setActive] = useState('tasks');
+  const pathname = usePathname();
   const online = true;
 
   return (
@@ -61,11 +63,11 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {NAV.map((item) => {
-          const isActive = item.id === active;
+          const isActive = pathname === item.href && (item.id === 'tasks' || item.href !== '/');
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => setActive(item.id)}
+              href={item.href}
               className={[
                 'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors',
                 isActive
@@ -82,7 +84,7 @@ export default function Sidebar() {
               {item.original && (
                 <span className="text-[9px] mono opacity-30 leading-none">*</span>
               )}
-            </button>
+            </Link>
           );
         })}
       </nav>
