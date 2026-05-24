@@ -281,22 +281,29 @@ export default function MemoryDashboard() {
         </div>
       </header>
 
-      <div className="grid gap-5 px-8 py-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div
+        className={[
+          'grid gap-5 px-8 py-6',
+          activeTab === 'Daily Log' ? 'xl:grid-cols-[minmax(0,1fr)_340px]' : 'xl:grid-cols-1',
+        ].join(' ')}
+      >
         <main className="min-w-0 space-y-5">
-          <section className="grid gap-3 md:grid-cols-4">
-            {[
-              ['Memory layers', String(LAYERS.length).padStart(2, '0'), 'daily / long-term / semantic'],
-              ['Active recall', String(activeLayerCount).padStart(2, '0'), 'safe context channels'],
-              ['Daily entries', String(DAILY_LOG.length).padStart(2, '0'), 'today'],
-              ['Linked modules', '05', 'tasks / content / calendar / projects / docs'],
-            ].map(([label, value, hint]) => (
-              <div key={label} className="rounded-md border border-cyan-300/15 bg-slate-950/68 p-4">
-                <p className="mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/65">{label}</p>
-                <p className="mt-2 mono text-3xl font-semibold text-white">{value}</p>
-                <p className="mt-1 mono text-[10px] uppercase tracking-[0.12em] text-slate-500">{hint}</p>
-              </div>
-            ))}
-          </section>
+          {activeTab === 'Daily Log' && (
+            <section className="grid gap-3 md:grid-cols-4">
+              {[
+                ['Memory layers', String(LAYERS.length).padStart(2, '0'), 'daily / long-term / semantic'],
+                ['Active recall', String(activeLayerCount).padStart(2, '0'), 'safe context channels'],
+                ['Daily entries', String(DAILY_LOG.length).padStart(2, '0'), 'today'],
+                ['Linked modules', '05', 'tasks / content / calendar / projects / docs'],
+              ].map(([label, value, hint]) => (
+                <div key={label} className="rounded-md border border-cyan-300/15 bg-slate-950/68 p-4">
+                  <p className="mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/65">{label}</p>
+                  <p className="mt-2 mono text-3xl font-semibold text-white">{value}</p>
+                  <p className="mt-1 mono text-[10px] uppercase tracking-[0.12em] text-slate-500">{hint}</p>
+                </div>
+              ))}
+            </section>
+          )}
 
           <section className="rounded-md border border-violet-300/15 bg-slate-950/68 p-2">
             <div className="flex flex-wrap gap-2">
@@ -323,60 +330,64 @@ export default function MemoryDashboard() {
 
           <MarkdownPanel tab={activeTab} selectedEntry={selectedEntry} onSelectEntry={setSelectedEntry} />
 
-          <section className="grid gap-3 lg:grid-cols-2">
-            {LAYERS.map((layer) => (
-              <article key={layer.name} className="rounded-md border border-cyan-300/15 bg-slate-950/72 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <h3 className="text-[13px] font-semibold text-white">{layer.name}</h3>
-                  <Pill className="border-cyan-300/40 bg-cyan-300/10 text-cyan-100">{layer.status}</Pill>
-                </div>
-                <p className="mt-3 text-[12px] leading-relaxed text-slate-300">{layer.description}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {layer.linked.map((item) => (
-                    <span key={item} className="rounded border border-slate-600/50 px-2 py-1 text-[10px] text-slate-300">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </section>
+          {activeTab === 'Daily Log' && (
+            <section className="grid gap-3 lg:grid-cols-2">
+              {LAYERS.map((layer) => (
+                <article key={layer.name} className="rounded-md border border-cyan-300/15 bg-slate-950/72 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="text-[13px] font-semibold text-white">{layer.name}</h3>
+                    <Pill className="border-cyan-300/40 bg-cyan-300/10 text-cyan-100">{layer.status}</Pill>
+                  </div>
+                  <p className="mt-3 text-[12px] leading-relaxed text-slate-300">{layer.description}</p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {layer.linked.map((item) => (
+                      <span key={item} className="rounded border border-slate-600/50 px-2 py-1 text-[10px] text-slate-300">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </section>
+          )}
         </main>
 
-        <aside className="space-y-5">
-          {activeTab === 'Daily Log' && <DailyLogDetail entry={selectedEntry} />}
+        {activeTab === 'Daily Log' && (
+          <aside className="space-y-5">
+            <DailyLogDetail entry={selectedEntry} />
 
-          <section className="rounded-md border border-violet-300/15 bg-slate-950/70 p-4">
-            <h2 className="text-[13px] font-semibold text-white">Semantic Recall</h2>
-            <div className="mt-4 space-y-3">
-              {RECALLS.map(([label, text]) => (
-                <div key={label} className="rounded border border-slate-700/70 bg-slate-900/70 p-3">
-                  <p className="mono text-[10px] uppercase tracking-[0.14em] text-violet-200/70">{label}</p>
-                  <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{text}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+            <section className="rounded-md border border-violet-300/15 bg-slate-950/70 p-4">
+              <h2 className="text-[13px] font-semibold text-white">Semantic Recall</h2>
+              <div className="mt-4 space-y-3">
+                {RECALLS.map(([label, text]) => (
+                  <div key={label} className="rounded border border-slate-700/70 bg-slate-900/70 p-3">
+                    <p className="mono text-[10px] uppercase tracking-[0.14em] text-violet-200/70">{label}</p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-          <section className="rounded-md border border-cyan-300/15 bg-slate-950/70 p-4">
-            <h2 className="text-[13px] font-semibold text-white">Knowledge Links</h2>
-            <div className="mt-4 space-y-2 mono text-[10px] uppercase tracking-[0.12em] text-cyan-100/80">
-              {['Tasks', 'Content', 'Calendar', 'Projects', 'Docs', 'Agents'].map((item) => (
-                <div key={item} className="flex justify-between rounded border border-slate-700/70 bg-slate-900/70 px-2 py-2">
-                  <span>{item}</span>
-                  <span className="text-violet-100">linked</span>
-                </div>
-              ))}
-            </div>
-          </section>
+            <section className="rounded-md border border-cyan-300/15 bg-slate-950/70 p-4">
+              <h2 className="text-[13px] font-semibold text-white">Knowledge Links</h2>
+              <div className="mt-4 space-y-2 mono text-[10px] uppercase tracking-[0.12em] text-cyan-100/80">
+                {['Tasks', 'Content', 'Calendar', 'Projects', 'Docs', 'Agents'].map((item) => (
+                  <div key={item} className="flex justify-between rounded border border-slate-700/70 bg-slate-900/70 px-2 py-2">
+                    <span>{item}</span>
+                    <span className="text-violet-100">linked</span>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-          <section className="rounded-md border border-violet-300/15 bg-violet-300/8 p-4">
-            <h2 className="text-[13px] font-semibold text-white">Memory Guardrail</h2>
-            <p className="mt-3 text-[12px] leading-relaxed text-slate-300">
-              This view exposes curated operational context, not secrets. Sensitive credentials, cookies, and private raw data stay out of the dashboard.
-            </p>
-          </section>
-        </aside>
+            <section className="rounded-md border border-violet-300/15 bg-violet-300/8 p-4">
+              <h2 className="text-[13px] font-semibold text-white">Memory Guardrail</h2>
+              <p className="mt-3 text-[12px] leading-relaxed text-slate-300">
+                This view exposes curated operational context, not secrets. Sensitive credentials, cookies, and private raw data stay out of the dashboard.
+              </p>
+            </section>
+          </aside>
+        )}
       </div>
     </div>
   );
