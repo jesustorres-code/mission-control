@@ -16,18 +16,17 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { id: 'overview',  label: 'Overview',  href: '/',         icon: 'home',     original: true, empty: true },
-  { id: 'agents',    label: 'Agents',    href: '/agents',   icon: 'agents',   original: true, empty: true },
-  { id: 'tasks',     label: 'Tasks',     href: '/',         icon: 'tasks',    original: true },
-  { id: 'logs',      label: 'Logs',      href: '/logs',     icon: 'logs',     original: true, empty: true },
-  { id: 'settings',  label: 'Settings',  href: '/settings', icon: 'settings', original: true, empty: true },
+  { id: 'overview',  label: 'Overview',  href: '/',         icon: 'home',     original: true },
+  { id: 'tasks',     label: 'Tasks',     href: '/tasks',    icon: 'tasks',    original: true },
+  { id: 'logs',      label: 'Logs',      href: '/logs',     icon: 'logs',     original: true },
+  { id: 'settings',  label: 'Settings',  href: '/settings', icon: 'settings', original: true },
   { id: 'content',   label: 'Content',   href: '/content',  icon: 'content'   },
   { id: 'calendar',  label: 'Calendar',  href: '/calendar', icon: 'calendar'  },
   { id: 'projects',  label: 'Projects',  href: '/projects', icon: 'projects'  },
   { id: 'memory',    label: 'Memory',    href: '/memory',   icon: 'memory'    },
   { id: 'docs',      label: 'Docs',      href: '/docs',     icon: 'docs'      },
   { id: 'team',      label: 'Team',      href: '/team',     icon: 'team'      },
-  { id: 'visual',    label: 'Visual',    href: '/visual',   icon: 'visual',   empty: true },
+  { id: 'visual',    label: 'Visual',    href: '/visual',   icon: 'visual' },
 ];
 
 const VERSION = '0.1.0';
@@ -64,7 +63,7 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {NAV.map((item) => {
-          const isActive = pathname === item.href && (item.id === 'tasks' || item.href !== '/');
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.id}
