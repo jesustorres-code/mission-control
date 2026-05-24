@@ -339,7 +339,7 @@ export default function ContentWatchlist() {
                 </div>
                 <SignalPill className="border-rose-300/50 bg-rose-500/15 text-rose-100">{topScore}+ top signal</SignalPill>
               </div>
-              <div className="grid gap-3 2xl:grid-cols-2">
+              <div className="grid gap-3">
                 {sortedTopics.map((topic) => (
                   <TopicCard key={topic.name} topic={topic} />
                 ))}
@@ -351,7 +351,7 @@ export default function ContentWatchlist() {
                 <h2 className="text-[14px] font-semibold text-white">AI-generated content opportunities</h2>
                 <p className="mono mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-500">Generated from projects, tasks, agents, deployment events, and working memory</p>
               </div>
-              <div className="grid gap-3 2xl:grid-cols-2">
+              <div className="grid gap-3">
                 {IDEAS.map((idea) => (
                   <IdeaCard key={idea.title} idea={idea} />
                 ))}
@@ -394,4 +394,3 @@ export default function ContentWatchlist() {
     </div>
   );
 }
-
