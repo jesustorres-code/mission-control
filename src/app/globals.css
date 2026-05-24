@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --surface: #f5f5f5;
-  --border: #e5e5e5;
-  --foreground: #1a1a2e;
-  --muted: #6b7280;
-  --primary: #6b21a8;
-  --accent: #a855f7;
-  --highlight: #e9d5ff;
+  --background: #020617;
+  --surface: #0f172a;
+  --border: rgba(103, 232, 249, 0.18);
+  --foreground: #e2e8f0;
+  --muted: #94a3b8;
+  --primary: #22d3ee;
+  --accent: #38bdf8;
+  --highlight: rgba(34, 211, 238, 0.14);
 }
 
 @theme inline {
@@ -40,8 +40,8 @@ body {
 
 .pixel-grid {
   background-image:
-    linear-gradient(to right, rgba(107, 33, 168, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(107, 33, 168, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(34, 211, 238, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.07) 1px, transparent 1px);
   background-size: 8px 8px;
 }
 

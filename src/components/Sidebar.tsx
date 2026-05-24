@@ -30,11 +30,11 @@ const NAV: NavItem[] = [
 const VERSION = '0.1.0';
 
 export default function Sidebar() {
-  const [active, setActive] = useState('overview');
+  const [active, setActive] = useState('tasks');
   const online = true;
 
   return (
-    <aside className="w-60 shrink-0 h-screen flex flex-col border-r border-[color:var(--border)] bg-white">
+    <aside className="w-60 shrink-0 h-screen flex flex-col border-r border-[color:var(--border)] bg-slate-950">
       {/* Branding */}
       <div className="px-4 pt-5 pb-4 border-b border-[color:var(--border)] pixel-grid">
         <div className="flex items-center gap-2.5">
@@ -69,7 +69,7 @@ export default function Sidebar() {
               className={[
                 'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors',
                 isActive
-                  ? 'bg-[color:var(--highlight)] text-[color:var(--primary)]'
+                  ? 'bg-[color:var(--highlight)] text-[color:var(--primary)] shadow-[0_0_18px_rgba(34,211,238,0.12)]'
                   : 'text-[color:var(--foreground)] hover:bg-[color:var(--surface)]',
               ].join(' ')}
             >
