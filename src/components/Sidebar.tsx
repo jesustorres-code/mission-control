@@ -12,21 +12,22 @@ type NavItem = {
   icon: 'home' | 'agents' | 'tasks' | 'logs' | 'settings'
       | 'content' | 'calendar' | 'projects' | 'memory' | 'docs' | 'team' | 'visual';
   original?: boolean;
+  empty?: boolean;
 };
 
 const NAV: NavItem[] = [
-  { id: 'overview',  label: 'Overview',  href: '/',         icon: 'home',     original: true },
-  { id: 'agents',    label: 'Agents',    href: '/agents',   icon: 'agents',   original: true },
+  { id: 'overview',  label: 'Overview',  href: '/',         icon: 'home',     original: true, empty: true },
+  { id: 'agents',    label: 'Agents',    href: '/agents',   icon: 'agents',   original: true, empty: true },
   { id: 'tasks',     label: 'Tasks',     href: '/',         icon: 'tasks',    original: true },
-  { id: 'logs',      label: 'Logs',      href: '/logs',     icon: 'logs',     original: true },
-  { id: 'settings',  label: 'Settings',  href: '/settings', icon: 'settings', original: true },
+  { id: 'logs',      label: 'Logs',      href: '/logs',     icon: 'logs',     original: true, empty: true },
+  { id: 'settings',  label: 'Settings',  href: '/settings', icon: 'settings', original: true, empty: true },
   { id: 'content',   label: 'Content',   href: '/content',  icon: 'content'   },
   { id: 'calendar',  label: 'Calendar',  href: '/calendar', icon: 'calendar'  },
   { id: 'projects',  label: 'Projects',  href: '/projects', icon: 'projects'  },
   { id: 'memory',    label: 'Memory',    href: '/memory',   icon: 'memory'    },
   { id: 'docs',      label: 'Docs',      href: '/docs',     icon: 'docs'      },
   { id: 'team',      label: 'Team',      href: '/team',     icon: 'team'      },
-  { id: 'visual',    label: 'Visual',    href: '/visual',   icon: 'visual'    },
+  { id: 'visual',    label: 'Visual',    href: '/visual',   icon: 'visual',   empty: true },
 ];
 
 const VERSION = '0.1.0';
@@ -83,6 +84,9 @@ export default function Sidebar() {
               <span className="flex-1 text-left">{item.label}</span>
               {item.original && (
                 <span className="text-[9px] mono opacity-30 leading-none">*</span>
+              )}
+              {item.empty && (
+                <span className="text-[9px] mono opacity-40 leading-none">0</span>
               )}
             </Link>
           );
