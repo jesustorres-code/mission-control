@@ -18,6 +18,27 @@ const stateAccents: Record<TaskState, string> = {
   Done: '#34d399',
 };
 
+function newTaskId(tasks: Task[]) {
+  const next = Math.max(205, ...tasks.map((task) => Number(task.id.replace('MC-', ''))).filter(Number.isFinite)) + 1;
+  return `MC-${next}`;
+}
+
+function createBlankTask(tasks: Task[]): Task {
+  return {
+    id: newTaskId(tasks),
+    title: 'New Mission Control task',
+    path: '/home/ubuntu/.openclaw/workspace/projects/mission-control',
+    instructions: 'Define the next concrete action for this task.',
+    context: 'Created from the persistent Tasks interface.',
+    state: 'To Do',
+    owner: 'SkyNode',
+    priority: 'Medium',
+    sync: 'Created from Mission Control UI',
+    eta: '30m',
+    tags: ['new-task'],
+  };
+}
+
 function AgentAvatar({ agent }: { agent: Agent }) {
   if (agent.kind === 'human') {
     return (
@@ -87,51 +108,75 @@ function TaskCard({ task, onSelect }: { task: Task; onSelect: (task: Task) => vo
   );
 }
 
-function TaskDetail({ task, onClose, onPatch }: { task: Task; onClose: () => void; onPatch: (id: string, patch: Partial<Task>) => void }) {
+function TaskDetail({ task, onClose, onSave }: { task: Task; onClose: () => void; onSave: (task: Task) => void }) {
+  const [draft, setDraft] = useState<Task>(task);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft(task);
+  }, [task]);
+
   return (
     <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-[420px] overflow-y-auto border-l border-cyan-300/20 bg-slate-950/95 p-5 shadow-[0_0_42px_rgba(14,165,233,0.18)] backdrop-blur">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="mono text-[11px] uppercase tracking-[0.18em] text-cyan-200/70">{task.id}</p>
-          <h2 className="mt-2 text-xl font-semibold leading-tight text-white">{task.title}</h2>
+          <p className="mono text-[11px] uppercase tracking-[0.18em] text-cyan-200/70">{draft.id}</p>
+          <h2 className="mt-2 text-xl font-semibold leading-tight text-white">{draft.title}</h2>
         </div>
         <button type="button" onClick={onClose} className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-cyan-300 hover:text-cyan-100">Close</button>
       </div>
 
       <div className="mt-5 grid gap-3">
         <label className="grid gap-1">
+          <span className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">Title</span>
+          <input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none" />
+        </label>
+        <label className="grid gap-1">
           <span className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">State</span>
-          <select value={task.state} onChange={(event) => onPatch(task.id, { state: event.target.value as TaskState })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none">
+          <select value={draft.state} onChange={(event) => setDraft({ ...draft, state: event.target.value as TaskState })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none">
             {COLUMNS.map((state) => <option key={state}>{state}</option>)}
           </select>
         </label>
         <label className="grid gap-1">
           <span className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">Owner</span>
-          <select value={task.owner} onChange={(event) => onPatch(task.id, { owner: event.target.value })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none">
+          <select value={draft.owner} onChange={(event) => setDraft({ ...draft, owner: event.target.value })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none">
             {AGENTS.map((agent) => <option key={agent.name}>{agent.name}</option>)}
           </select>
         </label>
         <label className="grid gap-1">
           <span className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">Priority</span>
-          <select value={task.priority} onChange={(event) => onPatch(task.id, { priority: event.target.value as Priority })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none">
+          <select value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as Priority })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none">
             {['Critical', 'High', 'Medium', 'Low'].map((priority) => <option key={priority}>{priority}</option>)}
           </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">ETA</span>
+          <input value={draft.eta} onChange={(event) => setDraft({ ...draft, eta: event.target.value })} className="rounded border border-cyan-300/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none" />
         </label>
       </div>
 
       <div className="mt-5 space-y-4 text-sm leading-6 text-slate-300">
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Instructions</h3>
-          <p className="mt-2 rounded border border-cyan-300/10 bg-cyan-300/5 p-3">{task.instructions}</p>
+          <textarea value={draft.instructions} onChange={(event) => setDraft({ ...draft, instructions: event.target.value })} rows={4} className="mt-2 w-full rounded border border-cyan-300/10 bg-cyan-300/5 p-3 text-sm text-slate-100 outline-none" />
         </section>
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Context</h3>
-          <p className="mt-2 rounded border border-slate-700 bg-slate-900/70 p-3">{task.context}</p>
+          <textarea value={draft.context} onChange={(event) => setDraft({ ...draft, context: event.target.value })} rows={4} className="mt-2 w-full rounded border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-100 outline-none" />
         </section>
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Path</h3>
-          <p className="mt-2 break-all rounded border border-slate-700 bg-slate-900/70 p-3 mono text-xs text-slate-400">{task.path}</p>
+          <input value={draft.path} onChange={(event) => setDraft({ ...draft, path: event.target.value })} className="mt-2 w-full rounded border border-slate-700 bg-slate-900/70 p-3 mono text-xs text-slate-100 outline-none" />
         </section>
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Sync</h3>
+          <input value={draft.sync} onChange={(event) => setDraft({ ...draft, sync: event.target.value })} className="mt-2 w-full rounded border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-100 outline-none" />
+        </section>
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">Tags</h3>
+          <input value={draft.tags.join(', ')} onChange={(event) => setDraft({ ...draft, tags: event.target.value.split(',').map((tag) => tag.trim()).filter(Boolean) })} className="mt-2 w-full rounded border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-100 outline-none" />
+        </section>
+        <button type="button" onClick={() => onSave(draft)} className="w-full rounded-md bg-cyan-300 px-3 py-2 text-[12px] font-semibold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:bg-cyan-200">Save task</button>
       </div>
     </aside>
   );
@@ -157,20 +202,21 @@ export default function TasksDashboard() {
     loadTasks().catch((error) => setStatus(error instanceof Error ? error.message : 'Unable to load tasks'));
   }, []);
 
-  async function patchTask(id: string, patch: Partial<Task>) {
-    const response = await fetch(`/api/tasks/${id}`, {
-      method: 'PATCH',
+  async function saveTask(task: Task) {
+    const exists = tasks.some((item) => item.id === task.id);
+    const response = await fetch(exists ? `/api/tasks/${task.id}` : '/api/tasks', {
+      method: exists ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
+      body: JSON.stringify(task),
     });
     const data = await response.json() as { task?: Task; error?: string };
     if (!response.ok || !data.task) {
-      setStatus(data.error ?? 'Task update failed');
+      setStatus(data.error ?? 'Task save failed');
       return;
     }
-    setTasks((current) => current.map((task) => (task.id === id ? data.task! : task)));
+    setTasks((current) => exists ? current.map((item) => item.id === task.id ? data.task! : item) : [data.task!, ...current]);
     setSelectedTask(data.task);
-    setStatus(`Saved ${id} to MySQL`);
+    setStatus(`Saved ${task.id} to MySQL`);
   }
 
   const taskCounts = useMemo(() => {
@@ -200,6 +246,7 @@ export default function TasksDashboard() {
             <div className="flex items-center gap-2">
               <StatusPill className="border-emerald-300/50 bg-emerald-400/15 text-emerald-100">Persistent</StatusPill>
               <button type="button" onClick={loadTasks} className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[12px] font-semibold text-cyan-50 hover:bg-cyan-300/20">Sync board</button>
+              <button type="button" onClick={() => setSelectedTask(createBlankTask(tasks))} className="rounded-md bg-cyan-300 px-3 py-2 text-[12px] font-semibold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:bg-cyan-200">New task</button>
             </div>
           </div>
         </div>
@@ -300,7 +347,7 @@ export default function TasksDashboard() {
         </aside>
       </div>
 
-      {selectedTask && <TaskDetail task={selectedTask} onClose={() => setSelectedTask(null)} onPatch={patchTask} />}
+      {selectedTask && <TaskDetail task={selectedTask} onClose={() => setSelectedTask(null)} onSave={saveTask} />}
     </div>
   );
 }

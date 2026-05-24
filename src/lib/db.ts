@@ -1,5 +1,5 @@
 import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
-import { SEED_LOGS, SEED_TASKS, type LogEntry, type LogLevel, type Priority, type Task, type TaskState } from './mission-control';
+import { SEED_LOGS, SEED_PROJECTS, SEED_SETTINGS, SEED_TASKS, type LogEntry, type LogLevel, type Priority, type Project, type ProjectCategory, type ProjectStatus, type SettingGroup, type Task, type TaskState } from './mission-control';
 
 type TaskRow = RowDataPacket & {
   id: string;
@@ -26,6 +26,31 @@ type LogRow = RowDataPacket & {
   message: string;
   source: string;
   created_at: Date;
+};
+
+type SettingRow = RowDataPacket & {
+  id: string;
+  title: string;
+  status: 'Configured' | 'Planned' | 'Active';
+  items_json: string[] | string;
+  updated_at: Date;
+};
+
+type ProjectRow = RowDataPacket & {
+  id: string;
+  name: string;
+  status: ProjectStatus;
+  category: ProjectCategory;
+  progress: number;
+  created: string;
+  repo: string;
+  route: string;
+  summary: string;
+  agents_json: string[] | string;
+  pipelines_json: string[] | string;
+  metrics_json: Array<[string, string]> | string;
+  activity: string;
+  updated_at: Date;
 };
 
 const globalForDb = globalThis as typeof globalThis & { missionControlPool?: Pool };
@@ -91,6 +116,36 @@ export async function ensureSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS settings_groups (
+      id VARCHAR(80) PRIMARY KEY,
+      title VARCHAR(160) NOT NULL,
+      status ENUM('Configured', 'Planned', 'Active') NOT NULL DEFAULT 'Planned',
+      items_json JSON NOT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id VARCHAR(100) PRIMARY KEY,
+      name VARCHAR(180) NOT NULL,
+      status ENUM('ACTIVE', 'DEPLOYING', 'PLANNING', 'REVIEW', 'PAUSED') NOT NULL DEFAULT 'PLANNING',
+      category ENUM('AI System', 'Product', 'Content Pipeline', 'Infrastructure', 'Research') NOT NULL DEFAULT 'Product',
+      progress INT NOT NULL DEFAULT 0,
+      created VARCHAR(40) NOT NULL,
+      repo VARCHAR(255) NOT NULL,
+      route VARCHAR(512) NOT NULL,
+      summary TEXT NOT NULL,
+      agents_json JSON NOT NULL,
+      pipelines_json JSON NOT NULL,
+      metrics_json JSON NOT NULL,
+      activity TEXT NOT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_projects_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   const [[taskCount]] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) AS count FROM tasks');
   if (Number(taskCount.count) === 0) {
     for (const task of SEED_TASKS) {
@@ -104,12 +159,31 @@ export async function ensureSchema() {
       await createLog(log);
     }
   }
+
+  const [[settingsCount]] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) AS count FROM settings_groups');
+  if (Number(settingsCount.count) === 0) {
+    for (const group of SEED_SETTINGS) {
+      await upsertSettingGroup(group, false);
+    }
+  }
+
+  const [[projectCount]] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) AS count FROM projects');
+  if (Number(projectCount.count) === 0) {
+    for (const project of SEED_PROJECTS) {
+      await upsertProject(project, false);
+    }
+  }
+}
+
+function readJson<T>(value: T | string, fallback: T): T {
+  if (Array.isArray(value)) return value as T;
+  if (!value) return fallback;
+  if (typeof value === 'string') return JSON.parse(value) as T;
+  return value as T;
 }
 
 function mapTask(row: TaskRow): Task {
-  const tags = Array.isArray(row.tags_json)
-    ? row.tags_json
-    : JSON.parse(row.tags_json || '[]') as string[];
+  const tags = readJson<string[]>(row.tags_json, []);
 
   return {
     id: row.id,
@@ -124,6 +198,35 @@ function mapTask(row: TaskRow): Task {
     eta: row.eta,
     tags,
     createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function mapSetting(row: SettingRow): SettingGroup {
+  return {
+    id: row.id,
+    title: row.title,
+    status: row.status,
+    items: readJson<string[]>(row.items_json, []),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function mapProject(row: ProjectRow): Project {
+  return {
+    id: row.id,
+    name: row.name,
+    status: row.status,
+    category: row.category,
+    progress: Number(row.progress),
+    created: row.created,
+    repo: row.repo,
+    route: row.route,
+    summary: row.summary,
+    agents: readJson<string[]>(row.agents_json, []),
+    pipelines: readJson<string[]>(row.pipelines_json, []),
+    metrics: readJson<Array<[string, string]>>(row.metrics_json, []),
+    activity: row.activity,
     updatedAt: row.updated_at.toISOString(),
   };
 }
@@ -218,4 +321,64 @@ export async function createLog(log: Omit<LogEntry, 'id'>) {
      VALUES (:time, :actor, :level, :area, :message, :source)`,
     log,
   );
+}
+
+export async function listSettings() {
+  await ensureSchema();
+  const [rows] = await getPool().query<SettingRow[]>("SELECT * FROM settings_groups ORDER BY FIELD(status, 'Configured', 'Active', 'Planned'), title");
+  return rows.map(mapSetting);
+}
+
+export async function upsertSettingGroup(group: SettingGroup, writeLog = true) {
+  await getPool().execute(
+    `INSERT INTO settings_groups (id, title, status, items_json)
+     VALUES (:id, :title, :status, CAST(:items AS JSON))
+     ON DUPLICATE KEY UPDATE title = VALUES(title), status = VALUES(status), items_json = VALUES(items_json)`,
+    { ...group, items: JSON.stringify(group.items) },
+  );
+
+  if (writeLog) {
+    await createLog({
+      time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      actor: 'Mission Control',
+      level: 'ACTION',
+      area: 'Settings',
+      message: `Settings group ${group.id} saved with status ${group.status}.`,
+      source: 'api:/api/settings',
+    });
+  }
+}
+
+export async function listProjects() {
+  await ensureSchema();
+  const [rows] = await getPool().query<ProjectRow[]>("SELECT * FROM projects ORDER BY FIELD(status, 'DEPLOYING', 'ACTIVE', 'REVIEW', 'PLANNING', 'PAUSED'), progress DESC");
+  return rows.map(mapProject);
+}
+
+export async function upsertProject(project: Project, writeLog = true) {
+  await getPool().execute(
+    `INSERT INTO projects (id, name, status, category, progress, created, repo, route, summary, agents_json, pipelines_json, metrics_json, activity)
+     VALUES (:id, :name, :status, :category, :progress, :created, :repo, :route, :summary, CAST(:agents AS JSON), CAST(:pipelines AS JSON), CAST(:metrics AS JSON), :activity)
+     ON DUPLICATE KEY UPDATE
+      name = VALUES(name), status = VALUES(status), category = VALUES(category), progress = VALUES(progress),
+      created = VALUES(created), repo = VALUES(repo), route = VALUES(route), summary = VALUES(summary),
+      agents_json = VALUES(agents_json), pipelines_json = VALUES(pipelines_json), metrics_json = VALUES(metrics_json), activity = VALUES(activity)`,
+    {
+      ...project,
+      agents: JSON.stringify(project.agents),
+      pipelines: JSON.stringify(project.pipelines),
+      metrics: JSON.stringify(project.metrics),
+    },
+  );
+
+  if (writeLog) {
+    await createLog({
+      time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      actor: 'Mission Control',
+      level: 'ACTION',
+      area: 'Projects',
+      message: `Project ${project.id} saved with status ${project.status} and ${project.progress}% progress.`,
+      source: 'api:/api/projects',
+    });
+  }
 }

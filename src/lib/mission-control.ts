@@ -3,6 +3,8 @@ export type TaskFilter = 'All' | TaskState;
 export type MemberFilter = 'Everyone' | 'Inky' | 'Tina' | 'AI Agents' | 'Team';
 export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type LogLevel = 'INFO' | 'ACTION' | 'WARN' | 'DONE';
+export type ProjectStatus = 'ACTIVE' | 'DEPLOYING' | 'PLANNING' | 'REVIEW' | 'PAUSED';
+export type ProjectCategory = 'AI System' | 'Product' | 'Content Pipeline' | 'Infrastructure' | 'Research';
 
 export type Agent = {
   name: string;
@@ -37,6 +39,31 @@ export type LogEntry = {
   message: string;
   source: string;
   createdAt?: string;
+};
+
+export type SettingGroup = {
+  id: string;
+  title: string;
+  status: 'Configured' | 'Planned' | 'Active';
+  items: string[];
+  updatedAt?: string;
+};
+
+export type Project = {
+  id: string;
+  name: string;
+  status: ProjectStatus;
+  category: ProjectCategory;
+  progress: number;
+  created: string;
+  repo: string;
+  route: string;
+  summary: string;
+  agents: string[];
+  pipelines: string[];
+  metrics: Array<[string, string]>;
+  activity: string;
+  updatedAt?: string;
 };
 
 export const AGENTS: Agent[] = [
@@ -155,5 +182,95 @@ export const SEED_LOGS: Omit<LogEntry, 'id'>[] = [
     area: 'Visual',
     message: 'Implemented Live Operations Map with task nodes and animated 8-bit agents.',
     source: 'commit:4340f8a',
+  },
+];
+
+export const SEED_SETTINGS: SettingGroup[] = [
+  {
+    id: 'telegram-voice',
+    title: 'Telegram + Voice',
+    status: 'Configured',
+    items: ['Text response first', 'Voice note delivery', 'es-MX-JorgeNeural', '1.8x playback preference'],
+  },
+  {
+    id: 'ai-runtime',
+    title: 'AI Runtime',
+    status: 'Planned',
+    items: ['Model selection', 'agent tool scopes', 'memory injection rules', 'workflow permissions'],
+  },
+  {
+    id: 'workspace',
+    title: 'Workspace',
+    status: 'Configured',
+    items: ['projects/ as permanent workspace', 'media-out/ as temporary output', 'memory files as continuity layer'],
+  },
+  {
+    id: 'integrations',
+    title: 'Integrations',
+    status: 'Planned',
+    items: ['GitHub', 'OpenClaw Gateway', 'Cloudflare tunnel', 'future vector database'],
+  },
+];
+
+export const SEED_PROJECTS: Project[] = [
+  {
+    id: 'mission-control',
+    name: 'Mission Control',
+    status: 'DEPLOYING',
+    category: 'AI System',
+    progress: 82,
+    created: '2026-05-24',
+    repo: 'github.com/jesustorres-code/mission-control',
+    route: '/home/ubuntu/.openclaw/workspace/projects/mission-control',
+    summary: 'AI-native operations dashboard with MySQL-backed tasks, logs, settings and live operational views.',
+    agents: ['SkyNode', 'Inky', 'Ops Team', 'Watchlist Engine'],
+    pipelines: ['task registry', 'content scoring', 'scheduler runtime', 'public deploy'],
+    metrics: [['backend', 'mysql'], ['routes live', '12'], ['status', '200']],
+    activity: 'Core backend phase is wiring persistent data and real actions into the dashboard.',
+  },
+  {
+    id: 'shazam-popular-segments',
+    name: 'Shazam Popular Segments',
+    status: 'ACTIVE',
+    category: 'Product',
+    progress: 84,
+    created: '2026-05-17',
+    repo: 'local git project',
+    route: '/home/ubuntu/.openclaw/workspace/projects/shazam-popular-segments',
+    summary: 'Audio intelligence system for creating song cases, extracting popular clips, testing providers, and serving a browser interface through Apache.',
+    agents: ['SkyNode', 'Ops Team'],
+    pipelines: ['clip extraction', 'provider previews', 'case generation', 'Apache route'],
+    metrics: [['public route', '/shazam'], ['api port', '8000'], ['health', 'online']],
+    activity: 'Service is running locally behind Apache on the public /shazam route.',
+  },
+  {
+    id: 'rpd-12-terraview',
+    name: 'RPD-12 TerraView',
+    status: 'REVIEW',
+    category: 'Research',
+    progress: 63,
+    created: '2026-05-21',
+    repo: 'static workspace prototype',
+    route: '/home/ubuntu/.openclaw/workspace/projects/rpd-12-terraview',
+    summary: 'Civic intelligence prototype for territorial dashboards, Oaxaca map visualization, sentiment/risk overlays, alert center and exportable data.',
+    agents: ['SkyNode', 'Watchlist Engine'],
+    pipelines: ['map visualization', 'risk scoring', 'narrative analysis', 'CSV export'],
+    metrics: [['tunnel history', 'active recently'], ['map asset', 'ready'], ['mode', 'demo']],
+    activity: 'Prototype has assets and a Cloudflare demo history; ready for product hardening.',
+  },
+  {
+    id: 'openclaw-ops-workspace',
+    name: 'OpenClaw Ops Workspace',
+    status: 'ACTIVE',
+    category: 'Infrastructure',
+    progress: 69,
+    created: '2026-05-16',
+    repo: '/home/ubuntu/.openclaw/workspace',
+    route: '/home/ubuntu/.openclaw/workspace',
+    summary: 'Operational home for memory, voice replies, Telegram workflows, dashboard reverse proxy notes, temporary media and agent continuity.',
+    agents: ['SkyNode'],
+    pipelines: ['memory capture', 'voice reply', 'service notes', 'heartbeat readiness'],
+    metrics: [['voice', 'enabled'], ['timezone', 'CST'], ['dashboard', 'proxied']],
+    activity: 'Maintains Guillermo’s preferences, TTS setup, project locations, and service URLs.',
   },
 ];
