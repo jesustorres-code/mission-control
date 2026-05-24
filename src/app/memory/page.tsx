@@ -3,6 +3,16 @@
 import { useMemo, useState } from 'react';
 
 type MemoryTab = 'Daily Log' | 'Long-term';
+type DailyLogEntry = {
+  time: string;
+  title: string;
+  body: string;
+  detail: string;
+  source: string;
+  memoryType: string;
+  links: string[];
+  actions: string[];
+};
 type MemoryLayer = {
   name: string;
   description: string;
@@ -10,30 +20,50 @@ type MemoryLayer = {
   linked: string[];
 };
 
-const DAILY_LOG = [
+const DAILY_LOG: DailyLogEntry[] = [
   {
     time: '02:37',
     title: 'Projects operating dashboard created',
     body: 'Added /projects with real initiatives: Mission Control, Shazam Popular Segments, RPD-12 TerraView, Content Intelligence Watchlist, OpenClaw Ops Workspace, and gytmdl tooling.',
+    detail:
+      'Projects became the operating map for Guillermo’s active ecosystem. It links product work, infrastructure, demos, AI pipelines, repos, agents, and deployment state into one executive layer.',
+    source: 'memory/2026-05-24.md + commit 891c042',
+    memoryType: 'episodic / project intelligence',
     links: ['Projects', 'Mission Control', 'git commit 891c042'],
+    actions: ['Open /projects', 'Link project tasks', 'Review pipelines', 'Summarize progress'],
   },
   {
     time: '02:31',
     title: 'Scheduler automation tower created',
     body: 'Added /calendar as an AI automation control center with daily, recurring, and one-shot workflows using SkyNode, Inky, Ops Team, and Watchlist Engine.',
+    detail:
+      'Scheduler models temporal automation as runnable workflows instead of calendar blocks. It captures cron logic, recurrence, agents, channels, next-run indicators, and operational actions.',
+    source: 'memory/2026-05-24.md + commit 6ed2214',
+    memoryType: 'episodic / procedural',
     links: ['Calendar', 'Scheduler', 'git commit 6ed2214'],
+    actions: ['Open /calendar', 'Inspect workflows', 'Run manually', 'Review logs'],
   },
   {
     time: '02:19',
     title: 'Content Watchlist launched',
     body: 'Added /content with Topic Watchlist, Content Ideas, scoring, urgency tiers, semantic tags, connected sources, and single-column signal cards.',
+    detail:
+      'Watchlist is the content intelligence layer. It ranks signals from Guillermo’s own projects, conversations, repos, deployments, memory, and agent work instead of using generic example topics.',
+    source: 'memory/2026-05-24.md + commits 62c7cc6 / 4806b62',
+    memoryType: 'episodic / semantic',
     links: ['Content', 'Watchlist', 'git commits 62c7cc6 / 4806b62'],
+    actions: ['Open /content', 'Generate ideas', 'Re-score signals', 'Link to tasks'],
   },
   {
     time: '01:45',
     title: 'Mission Control deployed',
     body: 'Cloned jesustorres-code/mission-control, installed dependencies, fixed Turbopack root, built production app, and served it through systemd plus Cloudflare Tunnel.',
+    detail:
+      'This is the root deployment event for the current Mission Control workstream. The app runs locally on Next.js through a systemd user service and is exposed through a Cloudflare quick tunnel.',
+    source: 'memory/2026-05-24.md + deployment checks',
+    memoryType: 'episodic / infrastructure',
     links: ['Next.js', 'Cloudflare Tunnel', 'systemd'],
+    actions: ['Check public URL', 'Restart service', 'Review git state', 'Audit dependencies'],
   },
 ];
 
@@ -109,7 +139,15 @@ function Pill({ children, className = '' }: { children: React.ReactNode; classNa
   );
 }
 
-function MarkdownPanel({ tab }: { tab: MemoryTab }) {
+function MarkdownPanel({
+  tab,
+  selectedEntry,
+  onSelectEntry,
+}: {
+  tab: MemoryTab;
+  selectedEntry: DailyLogEntry;
+  onSelectEntry: (entry: DailyLogEntry) => void;
+}) {
   if (tab === 'Long-term') {
     return (
       <section className="rounded-md border border-violet-300/15 bg-slate-950/72 p-4">
@@ -138,7 +176,17 @@ function MarkdownPanel({ tab }: { tab: MemoryTab }) {
       </div>
       <div className="mt-4 space-y-3">
         {DAILY_LOG.map((entry) => (
-          <article key={entry.title} className="rounded border border-slate-700/70 bg-slate-900/70 p-3">
+          <button
+            key={entry.title}
+            type="button"
+            onClick={() => onSelectEntry(entry)}
+            className={[
+              'block w-full rounded border p-3 text-left transition',
+              selectedEntry.title === entry.title
+                ? 'border-cyan-300/60 bg-cyan-300/10 shadow-[0_0_24px_rgba(34,211,238,0.16)]'
+                : 'border-slate-700/70 bg-slate-900/70 hover:border-cyan-300/35 hover:bg-cyan-300/5',
+            ].join(' ')}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/70">{entry.time} CST</p>
@@ -154,8 +202,55 @@ function MarkdownPanel({ tab }: { tab: MemoryTab }) {
                 </span>
               ))}
             </div>
-          </article>
+          </button>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function DailyLogDetail({ entry }: { entry: DailyLogEntry }) {
+  return (
+    <section className="rounded-md border border-cyan-300/15 bg-slate-950/70 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/70">{entry.time} CST selected memory</p>
+          <h2 className="mt-2 text-[15px] font-semibold leading-snug text-white">{entry.title}</h2>
+        </div>
+        <Pill className="border-cyan-300/40 bg-cyan-300/10 text-cyan-100">{entry.memoryType}</Pill>
+      </div>
+
+      <p className="mt-4 text-[12px] leading-relaxed text-slate-300">{entry.detail}</p>
+
+      <div className="mt-4 rounded border border-slate-700/70 bg-slate-900/70 p-3">
+        <p className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">Source</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-cyan-100">{entry.source}</p>
+      </div>
+
+      <div className="mt-4">
+        <p className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">Linked Context</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {entry.links.map((link) => (
+            <span key={link} className="rounded border border-violet-300/25 bg-violet-400/10 px-2 py-1 text-[10px] text-violet-100">
+              {link}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="mono text-[10px] uppercase tracking-[0.14em] text-slate-500">Available Actions</p>
+        <div className="mt-2 grid gap-2">
+          {entry.actions.map((action) => (
+            <button
+              key={action}
+              type="button"
+              className="rounded border border-cyan-300/20 bg-cyan-300/8 px-2.5 py-2 text-left text-[11px] font-semibold text-cyan-50 hover:bg-cyan-300/15"
+            >
+              {action}
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -163,6 +258,7 @@ function MarkdownPanel({ tab }: { tab: MemoryTab }) {
 
 export default function MemoryDashboard() {
   const [activeTab, setActiveTab] = useState<MemoryTab>('Daily Log');
+  const [selectedEntry, setSelectedEntry] = useState<DailyLogEntry>(DAILY_LOG[0]);
   const activeLayerCount = useMemo(() => LAYERS.filter((layer) => ['active', 'ready'].includes(layer.status)).length, []);
 
   return (
@@ -225,7 +321,7 @@ export default function MemoryDashboard() {
             </div>
           </section>
 
-          <MarkdownPanel tab={activeTab} />
+          <MarkdownPanel tab={activeTab} selectedEntry={selectedEntry} onSelectEntry={setSelectedEntry} />
 
           <section className="grid gap-3 lg:grid-cols-2">
             {LAYERS.map((layer) => (
@@ -248,6 +344,8 @@ export default function MemoryDashboard() {
         </main>
 
         <aside className="space-y-5">
+          {activeTab === 'Daily Log' && <DailyLogDetail entry={selectedEntry} />}
+
           <section className="rounded-md border border-violet-300/15 bg-slate-950/70 p-4">
             <h2 className="text-[13px] font-semibold text-white">Semantic Recall</h2>
             <div className="mt-4 space-y-3">
@@ -283,4 +381,3 @@ export default function MemoryDashboard() {
     </div>
   );
 }
-
