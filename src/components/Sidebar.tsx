@@ -4,14 +4,27 @@ import { useState } from 'react';
 import PixelOctopus from './PixelOctopus';
 import PixelIcon from './PixelIcon';
 
-type NavItem = { id: string; label: string; icon: 'home' | 'agents' | 'tasks' | 'logs' | 'settings' };
+type NavItem = {
+  id: string;
+  label: string;
+  icon: 'home' | 'agents' | 'tasks' | 'logs' | 'settings'
+      | 'content' | 'calendar' | 'projects' | 'memory' | 'docs' | 'team' | 'visual';
+  original?: boolean;
+};
 
 const NAV: NavItem[] = [
-  { id: 'overview', label: 'Overview',  icon: 'home'     },
-  { id: 'agents',   label: 'Agents',    icon: 'agents'   },
-  { id: 'tasks',    label: 'Tasks',     icon: 'tasks'    },
-  { id: 'logs',     label: 'Logs',      icon: 'logs'     },
-  { id: 'settings', label: 'Settings',  icon: 'settings' },
+  { id: 'overview',  label: 'Overview',  icon: 'home',     original: true },
+  { id: 'agents',    label: 'Agents',    icon: 'agents',   original: true },
+  { id: 'tasks',     label: 'Tasks',     icon: 'tasks',    original: true },
+  { id: 'logs',      label: 'Logs',      icon: 'logs',     original: true },
+  { id: 'settings',  label: 'Settings',  icon: 'settings', original: true },
+  { id: 'content',   label: 'Content',   icon: 'content'   },
+  { id: 'calendar',  label: 'Calendar',  icon: 'calendar'  },
+  { id: 'projects',  label: 'Projects',  icon: 'projects'  },
+  { id: 'memory',    label: 'Memory',    icon: 'memory'    },
+  { id: 'docs',      label: 'Docs',      icon: 'docs'      },
+  { id: 'team',      label: 'Team',      icon: 'team'      },
+  { id: 'visual',    label: 'Visual',    icon: 'visual'    },
 ];
 
 const VERSION = '0.1.0';
@@ -65,7 +78,10 @@ export default function Sidebar() {
                 size={14}
                 color={isActive ? 'var(--primary)' : 'var(--muted)'}
               />
-              {item.label}
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.original && (
+                <span className="text-[9px] mono opacity-30 leading-none">*</span>
+              )}
             </button>
           );
         })}
