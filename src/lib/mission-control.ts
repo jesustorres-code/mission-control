@@ -5,6 +5,8 @@ export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type LogLevel = 'INFO' | 'ACTION' | 'WARN' | 'DONE';
 export type ProjectStatus = 'ACTIVE' | 'DEPLOYING' | 'PLANNING' | 'REVIEW' | 'PAUSED';
 export type ProjectCategory = 'AI System' | 'Product' | 'Content Pipeline' | 'Infrastructure' | 'Research';
+export type ModelKey = 'openai/gpt-5.5' | 'google/gemini-2.0-flash' | 'groq/openai/gpt-oss-120b';
+export type ModelActivityKind = 'coordination' | 'volume' | 'speed' | 'code' | 'review' | 'system';
 
 export type Agent = {
   name: string;
@@ -37,6 +39,21 @@ export type LogEntry = {
   level: LogLevel;
   area: string;
   message: string;
+  source: string;
+  createdAt?: string;
+};
+
+export type ModelActivity = {
+  id: number;
+  time: string;
+  model: ModelKey;
+  alias: string;
+  actor: string;
+  kind: ModelActivityKind;
+  task: string;
+  outcome: string;
+  inputTokens: number;
+  outputTokens: number;
   source: string;
   createdAt?: string;
 };
@@ -182,6 +199,45 @@ export const SEED_LOGS: Omit<LogEntry, 'id'>[] = [
     area: 'Visual',
     message: 'Implemented Live Operations Map with task nodes and animated 8-bit agents.',
     source: 'commit:4340f8a',
+  },
+];
+
+export const SEED_MODEL_ACTIVITY: Omit<ModelActivity, 'id'>[] = [
+  {
+    time: '23:17',
+    model: 'openai/gpt-5.5',
+    alias: 'coordinator',
+    actor: 'SkyNode',
+    kind: 'coordination',
+    task: 'Model routing strategy',
+    outcome: 'Defined Gemini for volume, Groq for speed, OpenAI for judgment/code.',
+    inputTokens: 0,
+    outputTokens: 0,
+    source: 'telegram:679',
+  },
+  {
+    time: '23:48',
+    model: 'openai/gpt-5.5',
+    alias: 'coordinator',
+    actor: 'SkyNode',
+    kind: 'system',
+    task: 'Gateway and service restart',
+    outcome: 'Reloaded model configuration and verified OpenClaw/Mission Control health.',
+    inputTokens: 0,
+    outputTokens: 0,
+    source: 'telegram:703',
+  },
+  {
+    time: '23:57',
+    model: 'openai/gpt-5.5',
+    alias: 'coordinator',
+    actor: 'SkyNode',
+    kind: 'system',
+    task: 'Mission Control hardening',
+    outcome: 'Created permanent services, healthcheck timer and MySQL backup timer.',
+    inputTokens: 0,
+    outputTokens: 0,
+    source: 'telegram:719',
   },
 ];
 

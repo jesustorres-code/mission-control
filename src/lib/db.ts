@@ -1,5 +1,5 @@
 import mysql, { type Pool, type RowDataPacket } from 'mysql2/promise';
-import { SEED_LOGS, SEED_PROJECTS, SEED_SETTINGS, SEED_TASKS, type LogEntry, type LogLevel, type Priority, type Project, type ProjectCategory, type ProjectStatus, type SettingGroup, type Task, type TaskState } from './mission-control';
+import { SEED_LOGS, SEED_MODEL_ACTIVITY, SEED_PROJECTS, SEED_SETTINGS, SEED_TASKS, type LogEntry, type LogLevel, type ModelActivity, type ModelActivityKind, type ModelKey, type Priority, type Project, type ProjectCategory, type ProjectStatus, type SettingGroup, type Task, type TaskState } from './mission-control';
 
 type TaskRow = RowDataPacket & {
   id: string;
@@ -51,6 +51,21 @@ type ProjectRow = RowDataPacket & {
   metrics_json: Array<[string, string]> | string;
   activity: string;
   updated_at: Date;
+};
+
+type ModelActivityRow = RowDataPacket & {
+  id: number;
+  time_label: string;
+  model_key: ModelKey;
+  alias: string;
+  actor: string;
+  kind: ModelActivityKind;
+  task: string;
+  outcome: string;
+  input_tokens: number;
+  output_tokens: number;
+  source: string;
+  created_at: Date;
 };
 
 const globalForDb = globalThis as typeof globalThis & { missionControlPool?: Pool };
@@ -117,6 +132,26 @@ export async function ensureSchema() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS model_activity (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      time_label VARCHAR(40) NOT NULL,
+      model_key VARCHAR(120) NOT NULL,
+      alias VARCHAR(80) NOT NULL,
+      actor VARCHAR(80) NOT NULL,
+      kind ENUM('coordination', 'volume', 'speed', 'code', 'review', 'system') NOT NULL DEFAULT 'coordination',
+      task VARCHAR(220) NOT NULL,
+      outcome TEXT NOT NULL,
+      input_tokens INT UNSIGNED NOT NULL DEFAULT 0,
+      output_tokens INT UNSIGNED NOT NULL DEFAULT 0,
+      source VARCHAR(160) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_model_activity_created_at (created_at),
+      INDEX idx_model_activity_model (model_key),
+      INDEX idx_model_activity_kind (kind)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS settings_groups (
       id VARCHAR(80) PRIMARY KEY,
       title VARCHAR(160) NOT NULL,
@@ -157,6 +192,13 @@ export async function ensureSchema() {
   if (Number(logCount.count) === 0) {
     for (const log of SEED_LOGS) {
       await createLog(log);
+    }
+  }
+
+  const [[modelActivityCount]] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) AS count FROM model_activity');
+  if (Number(modelActivityCount.count) === 0) {
+    for (const activity of SEED_MODEL_ACTIVITY) {
+      await createModelActivity(activity, false);
     }
   }
 
@@ -244,6 +286,23 @@ function mapLog(row: LogRow): LogEntry {
   };
 }
 
+function mapModelActivity(row: ModelActivityRow): ModelActivity {
+  return {
+    id: row.id,
+    time: row.time_label,
+    model: row.model_key,
+    alias: row.alias,
+    actor: row.actor,
+    kind: row.kind,
+    task: row.task,
+    outcome: row.outcome,
+    inputTokens: Number(row.input_tokens),
+    outputTokens: Number(row.output_tokens),
+    source: row.source,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
 export async function listTasks() {
   await ensureSchema();
   const [rows] = await getPool().query<TaskRow[]>('SELECT * FROM tasks ORDER BY FIELD(state, \'In Progress\', \'To Do\', \'Blocked\', \'Done\'), updated_at DESC');
@@ -321,6 +380,32 @@ export async function createLog(log: Omit<LogEntry, 'id'>) {
      VALUES (:time, :actor, :level, :area, :message, :source)`,
     log,
   );
+}
+
+export async function listModelActivity(limit = 50) {
+  await ensureSchema();
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
+  const [rows] = await getPool().query<ModelActivityRow[]>(`SELECT * FROM model_activity ORDER BY created_at DESC, id DESC LIMIT ${safeLimit}`);
+  return rows.map(mapModelActivity);
+}
+
+export async function createModelActivity(activity: Omit<ModelActivity, 'id'>, writeLog = true) {
+  await getPool().execute(
+    `INSERT INTO model_activity (time_label, model_key, alias, actor, kind, task, outcome, input_tokens, output_tokens, source)
+     VALUES (:time, :model, :alias, :actor, :kind, :task, :outcome, :inputTokens, :outputTokens, :source)`,
+    activity,
+  );
+
+  if (writeLog) {
+    await createLog({
+      time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      actor: 'Mission Control',
+      level: 'ACTION',
+      area: 'Models',
+      message: `Model activity recorded for ${activity.alias} on ${activity.task}.`,
+      source: 'api:/api/model-activity',
+    });
+  }
 }
 
 export async function listSettings() {
